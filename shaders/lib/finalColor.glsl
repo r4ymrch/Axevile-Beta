@@ -3,7 +3,6 @@ vec3 AxevileTonemap(vec3 x) {
 }
 
 vec3 Final(vec3 color) {
-	color *= 1.3;
   color = AxevileTonemap(color);
 	return color;
 }
