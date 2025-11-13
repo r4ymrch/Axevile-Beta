@@ -1,6 +1,6 @@
-vec3 skyColor = mix(vec3(0.3, 0.5, 1.0) * 0.75, vec3(0.3, 0.5, 1.0), dayTime);
-vec3 fogColor = mix(vec3(1.0, 0.8, 0.6) * 1.5, vec3(0.9, 0.95, 1.0), dayTime);
-vec3 nightColor = vec3(0.2, 0.2, 0.3);
+float fogify(float x, float w) {
+	return w / (x * x + w);
+}
 
 float PhaseMie(float mu, float g) {
   float mu2 = mu * mu;
@@ -13,38 +13,42 @@ float PhaseMie(float mu, float g) {
   return k * ((1.0 - gg) * (mu2 + 1.0)) / denom;
 }
 
-float fogify(float y, float x) {
-  return x / (y * y + x);
-}
+vec4 CalcSky(vec3 pos) {
+	float upDot = dot(pos, gbufferModelView[1].xyz); //not much, what's up with you?
+	float lightDot = distance(pos, sunVector);
 
-vec3 CalcDaySky(vec3 worldPos) {
-  worldPos.y += 0.1;
-  if (worldPos.y < 0.0) return fogColor;
-  
-  float zenith = fogify(worldPos.y, 3.0);
-  float horizon = fogify(worldPos.y, 0.15);
-  
-  return mix(vec3(0) + skyColor * zenith, fogColor, horizon);
-}
-
-vec3 CalcNightSky(vec3 worldPos) {
-  if (worldPos.y < 0.0) return nightColor * 1.5;
-  float horizon = fogify(worldPos.y, 0.2);
-  return mix(nightColor, nightColor * 1.5, horizon);
-}
-
-vec3 CalcSky(vec3 worldPos) {
-  vec3 worldSunVec = mat3(gbufferModelViewInverse) * sunVec;
-
-  float PdotL = dot(worldPos, worldSunVec);
-  float PdistL = distance(worldPos, worldSunVec);
-  
-  float skyMixer = exp(-length(PdistL * 0.8)) * 1.5;
-  skyMixer = mix(skyMixer, exp(-length(PdistL * 0.2)) * 1.5, dayTime);
+	float zenith = fogify(max(upDot, 0.0), 1.5);
+	float horizon = fogify(max(upDot + 0.1, 0.0), 0.075);
+	
+	float skyMixer = smoothstep(1.0, 0.35, lightDot * 0.45);
+  skyMixer = mix(skyMixer, exp(-length(lightDot * 0.2)), dayTime);
   skyMixer = mix(skyMixer, 0.0, nightTime);
 
-  vec3 daySky = CalcDaySky(worldPos);
-  vec3 nightSky = CalcNightSky(worldPos);
+	float starAlpha = mix(9.0, 0.0, max(skyMixer, horizon));
+	starAlpha = mix(starAlpha, 0.0, dayTime);
+
+	vec3 daySky = mix(vec3(0) + skyColor * zenith, fogColor, horizon);
+	vec3 nightSky = mix(vec3(0) + nightColor * 0.65 * zenith, nightColor * 1.5, horizon);
+	vec3 totalSky = mix(nightSky * 0.9, daySky, skyMixer);
+
+	float PdotS = dot(pos, sunVector);
+	float PdotM = dot(pos, -sunVector);
+
+	vec3 mieSun = fogColor * 3.0 * PhaseMie(PdotS, 0.95) * 0.015;
+  vec3 mieSun2 = fogColor * 3.0 * PhaseMie(PdotS, 0.65) * 0.1;
+  mieSun *= (1.0 - nightTime);
+  mieSun2 *= (1.0 - nightTime);
   
-  return mix(nightSky, daySky, skyMixer);
+  vec3 mieMoon = nightColor * PhaseMie(PdotM, 0.65) * 0.25 * nightTime;
+  vec3 mieMoon2 = nightColor * PhaseMie(PdotM, 0.95) * 0.035 * nightTime;
+  
+  vec3 miePhase = mieSun + mieMoon + mieSun2 + mieMoon2;
+  miePhase *= (1.0 - rainStrength);
+  
+  totalSky += miePhase;
+
+	float grayscale = GetLuminance(totalSky);
+	totalSky = mix(totalSky, vec3(grayscale) * vec3(0.65, 0.8, 1.0), rainStrength);
+
+	return vec4(totalSky, starAlpha);
 }
