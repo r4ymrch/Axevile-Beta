@@ -2,11 +2,12 @@
 
 varying vec2 texcoord;
 
-uniform sampler2D gcolor;
+uniform sampler2D colortex0;
 
 // Optifine Constants
 /*
 const int colortex0Format = R11F_G11F_B10F;
+const int colortex2Format = RGB8;
 */
 
 vec3 AxevileTonemap(vec3 x) {
@@ -14,7 +15,7 @@ vec3 AxevileTonemap(vec3 x) {
 }
 
 void main() {
-	vec3 color = texture2D(gcolor, texcoord).rgb;
+	vec3 color = texture2D(colortex0, texcoord).rgb;
 
 	// linear to srgb
 	// color = pow(color, vec3(1.0 / 2.2));

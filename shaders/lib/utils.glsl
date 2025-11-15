@@ -1,3 +1,5 @@
+const float invNoiseRes = 0.015625;
+
 vec3 SRGBToLinear(vec3 srgb) {
   return pow(srgb, vec3(2.2));
 }

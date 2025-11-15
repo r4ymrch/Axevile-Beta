@@ -28,7 +28,7 @@ vec4 CalcSky(vec3 pos) {
 	starAlpha = mix(starAlpha, 0.0, dayTime);
 
 	vec3 daySky = mix(vec3(0) + skyColor * zenith, fogColor, horizon);
-	vec3 nightSky = mix(vec3(0) + nightColor * 0.65 * zenith, nightColor * 1.5, horizon);
+	vec3 nightSky = mix(vec3(0) + nightColor * 0.8 * zenith, nightColor * 1.5, horizon);
 	vec3 totalSky = mix(nightSky * 0.9, daySky, skyMixer);
 
 	float PdotS = dot(pos, sunVector);
