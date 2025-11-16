@@ -1,3 +1,3 @@
 #version 120
-#define FSH
-#include "/common/gbuffers_solid_blocks.glsl"
+#define GBUFFERS_TERRAIN
+#include "gbuffers.fsh"

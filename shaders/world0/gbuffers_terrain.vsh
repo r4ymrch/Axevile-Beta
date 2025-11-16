@@ -1,3 +1,3 @@
 #version 120
-#define VSH
-#include "/common/gbuffers_solid_blocks.glsl"
+#define GBUFFERS_TERRAIN
+#include "gbuffers.vsh"
