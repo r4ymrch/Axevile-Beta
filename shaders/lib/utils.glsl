@@ -1,3 +1,7 @@
+#define Rotate2D(x) mat2(cos(x), sin(x), -sin(x), cos(x))
+#define Diagonal3(m) vec3((m)[0].x, (m)[1].y, m[2].z)
+#define ProjMAD(m, v) (Diagonal3(m) * (v) + (m)[3].xyz)
+
 const float invNoiseRes = 0.015625;
 
 vec3 SRGBToLinear(vec3 srgb) {

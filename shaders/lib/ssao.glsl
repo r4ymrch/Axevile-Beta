@@ -7,7 +7,7 @@ float GetLinearDepth(float depth, mat4 invProjMatrix) {
 }
 
 float AmbientOcclusion(float dither) {
-	float z = texture2D(depthtex0, texcoord).r;
+	float z = texture2D(depthtex0, texCoord).r;
 	if(z >= 0.999) return 1.0;
 	
 	float linearZ = GetLinearDepth(z, gbufferProjectionInverse);
@@ -28,7 +28,7 @@ float AmbientOcclusion(float dither) {
     float angle = 0.0; 
     float dist = 0.0;
 		for (int j = 0; j < 2; j++) {
-			float sampleDepth = GetLinearDepth(texture2D(depthtex0, texcoord + offset).r, gbufferProjectionInverse);
+			float sampleDepth = GetLinearDepth(texture2D(depthtex0, texCoord + offset).r, gbufferProjectionInverse);
       float deltaZ = linearZ - sampleDepth;
 			float aoSample = deltaZ * mult / currentStep; 
 

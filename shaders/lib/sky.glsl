@@ -13,8 +13,8 @@ float PhaseMie(float mu, float g) {
   return k * ((1.0 - gg) * (mu2 + 1.0)) / denom;
 }
 
-vec4 CalcSky(vec3 pos) {
-	float upDot = dot(pos, gbufferModelView[1].xyz); //not much, what's up with you?
+vec4 CalcSky(vec3 pos, bool sky) {
+	float upDot = dot(pos, upVector); //not much, what's up with you?
 	float lightDot = distance(pos, sunVector);
 
 	float zenith = fogify(max(upDot, 0.0), 1.5);
@@ -35,14 +35,14 @@ vec4 CalcSky(vec3 pos) {
 	float PdotM = dot(pos, -sunVector);
 
 	vec3 mieSun = fogColor * 3.0 * PhaseMie(PdotS, 0.95) * 0.015;
-  vec3 mieSun2 = fogColor * 3.0 * PhaseMie(PdotS, 0.65) * 0.1;
-  mieSun *= (1.0 - nightTime);
+  vec3 mieSun2 = fogColor * 3.0 * PhaseMie(PdotS, 0.65) * 0.15;
+  mieSun *= (1.0 - nightTime) * float(sky);
   mieSun2 *= (1.0 - nightTime);
   
-  vec3 mieMoon = nightColor * PhaseMie(PdotM, 0.65) * 0.25 * nightTime;
-  vec3 mieMoon2 = nightColor * PhaseMie(PdotM, 0.95) * 0.035 * nightTime;
+  vec3 mieMoon = nightColor * PhaseMie(PdotM, 0.65) * 0.5 * nightTime;
+  vec3 mieMoon2 = nightColor * PhaseMie(PdotM, 0.95) * 0.035 * nightTime * float(sky);
   
-  vec3 miePhase = mieSun + mieMoon + mieSun2 + mieMoon2;
+  vec3 miePhase = (mieSun + mieSun2) + (mieMoon + mieMoon2);
   miePhase *= (1.0 - rainStrength);
   
   totalSky += miePhase;
