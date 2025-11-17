@@ -7,6 +7,9 @@ uniform sampler2D colortex0;
 // Optifine Constants
 /*
 const int colortex0Format = R11F_G11F_B10F;
+const int colortex1Format = RG8;
+const int colortex2Format = RGB8;
+const int colortex4Format = RGB8;
 */
 
 vec3 Tonemap(vec3 x) {

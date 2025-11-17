@@ -3,9 +3,9 @@
 - See README.md for more details.
 */
 
-#define PI 3.14159265
+#define PI 3.14159265358979
 #define hPI 1.57079633
-#define TAU 6.28318531
+#define TAU 6.28318530717959
 
 float pow2(float x) { return x * x; }
 vec2 pow2(vec2 x) { return x * x; }
