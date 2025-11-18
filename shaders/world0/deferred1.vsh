@@ -1,27 +1,42 @@
 /*
-- Axevile v1.0.0 - composite program.
-- See README.md for more details.
+====================================================
+- Axevile shaders v1.0.0 developed and maintaned by r4ymrch.
+- See README.md for more details about this shaders.
+- Last modified : 11/18/2025.
+====================================================
 */
 
 #version 120
 
+// Configurations
 #include "/lib/settings.glsl"
 
+// Varyings
 varying vec2 texCoord;
-varying vec3 sunVector, lightVector, upVector;
+varying vec3 sunVector, sunMoonVector, upVector;
 
+// Uniforms
 uniform float timeAngle;
 uniform mat4 gbufferModelView;
 
 // Common functions
 #include "/lib/utils/math.glsl"
 
+// Main program
 void main()
 {
   texCoord = gl_MultiTexCoord0.xy;
+
+  float sunAngle = fract(timeAngle - 0.25);
+  sunAngle = (sunAngle + (cos(sunAngle * 3.14159265358979) * -0.5 + 0.5 - sunAngle) / 3.0) * 6.28318530717959;
+
+  vec2 pathRotation = vec2(cos(sunPathRotation * 0.01745329251994), -sin(sunPathRotation * 0.01745329251994));
   
-  // Calculate sun vectors.
-  #include "/src/sunVector.glsl"
+  sunVector = (gbufferModelView * vec4(vec3(-sin(sunAngle), cos(sunAngle) * pathRotation) * 2000.0, 1.0)).xyz;
+  sunVector = normalize(sunVector);
+
+  sunMoonVector = (timeAngle < 0.5325 || timeAngle > 0.9675) ? sunVector : -sunVector;
+  upVector = normalize(gbufferModelView[1].xyz);
 
   gl_Position = ftransform();
 }

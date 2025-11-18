@@ -1,11 +1,10 @@
 /*
-- Axevile v1.0.0 - sky functions.
-- See README.md for more details.
+====================================================
+- Axevile shaders v1.0.0 developed and maintaned by r4ymrch.
+- See README.md for more details about this shaders.
+- Last modified : 11/18/2025.
+====================================================
 */
-
-float fogify(float x, float w) {
-	return w / (x * x + w);
-}
 
 float GetMiePhase(float mu, float g) {
   float mu2 = pow2(mu);
@@ -13,7 +12,7 @@ float GetMiePhase(float mu, float g) {
   float x = 1.0 + g2 - 2.0 * mu * g;
 
   float denom = x * sqrt(x) * (2.0 + g2);
-  const float k = 3.0 / (8.0 * PI);
+  const float k = 0.119366; // 3.0 / (8.0 * 3.14159265358979);
   
   return k * ((1.0 - g2) * (mu2 + 1.0)) / denom;
 }
@@ -23,38 +22,54 @@ vec4 CalcSky(vec3 position, bool sky) {
   float VoL = dot(position, sunVector);
 	float VoM = dot(position, -sunVector);
 
-	float zenith = fogify(max(VoU, 0.0), 1.5 * ZENITH_DENSITY);
+	float zenith = fogify(max(VoU, 0.0), 1.5 * ZENITH_DENSITY_MULTIPLIER);
 	float horizon = fogify(max(VoU + 0.15, 0.0), 0.05 * HORIZON_DENSITY_MULTIPLIER);
 	
-  float halos = exp(-length(distance(position, sunVector) * 0.2));
-	float skyMixer = smoothstep(1.0, 0.35, distance(position, sunVector) * 0.45);
-        skyMixer = mix(skyMixer, halos, dayTime);
-        skyMixer = mix(skyMixer, 0.0, nightTime);
+  float distToSun = distance(position, sunVector);
+  float skyMixer = smoothstep(1.0, 0.35, distToSun * 0.5);
+  float halos = exp(-distToSun * 0.2);
+  
+  skyMixer = skyMixer * (1.0 - dayTime) + halos * dayTime;
+  skyMixer *= (1.0 - nightTime);
 
 	float starAlpha = 0.0; 
   #ifdef STARS
-    starAlpha = mix(1.0 * STARS_BRIGHTNESS_MULTIPLIER, 0.0, max(skyMixer, horizon));
-    starAlpha = mix(starAlpha, 0.0, dayTime);
+    float brightness = 1.0 * STARS_BRIGHTNESS_MULTIPLIER;
+    float fadeOut = max(skyMixer, horizon);
+
+    starAlpha = brightness * (1.0 - fadeOut) * (1.0 - dayTime);
   #endif
 
-	vec3 daySky = mix(vec3(0) + skyColor * zenith, fogColor, horizon);
-	vec3 nightSky = mix(vec3(0) + nightColor * 0.8 * zenith, nightColor * 1.5, horizon);
-	vec3 totalSky = mix(nightSky * 0.9, daySky, skyMixer);
+  vec3 dayBase = vec3(0) + skyColor * zenith;
+  vec3 daySky = mix(dayBase, fogColor, horizon);
 
-  vec3 mieSun = fogColor * PI * (
-    (GetMiePhase(VoL, MIE_PHASE_G) * 0.05 * MIE_STRENGTH_MULTIPLIER) + 
-    (GetMiePhase(VoL, MIE_PHASE_G2) * 0.015 * MIE_STRENGTH_MULTIPLIER * float(sky))
-  ) * (1.0 - nightTime);
+  vec3 nightBase = vec3(0) + nightColor * 0.8 * zenith;
+  vec3 nightSky = mix(nightBase, nightColor * 1.5, horizon) * 0.9;
+
+  vec3 totalSky = mix(nightSky, daySky, skyMixer);
+
+  vec3 mieSun = fogColor * 3.14159265358979 * (
+    (
+      GetMiePhase(VoL, MIE_PHASE_G) * 0.05 + 
+      GetMiePhase(VoL, MIE_PHASE_G2) * 0.015 * float(sky)
+    )
+  ) * MIE_STRENGTH_MULTIPLIER * (1.0 - nightTime);
   
   vec3 mieMoon = nightColor * (
-    (GetMiePhase(VoM, MIE_PHASE_G) * 0.5 * MIE_STRENGTH_MULTIPLIER) + 
-    (GetMiePhase(VoM, MIE_PHASE_G2) * 0.035 * MIE_STRENGTH_MULTIPLIER * float(sky))
-  ) * nightTime;
+    (
+      GetMiePhase(VoM, MIE_PHASE_G) * 0.5 + 
+      GetMiePhase(VoM, MIE_PHASE_G2) * 0.035 * float(sky)
+    )
+  ) * MIE_STRENGTH_MULTIPLIER * nightTime;
+  
+  vec3 totalMie = (mieSun + mieMoon) * (1.0 - rainStrength);
 
-  totalSky += (mieSun + mieMoon) * (1.0 - rainStrength);
+  totalSky += totalMie;
 
-	vec3 rainColor = vec3(GetLuminance(totalSky)) * vec3(0.65, 0.8, 1.0);
-	totalSky = mix(totalSky, rainColor, rainStrength);
+  if (rainStrength > 0.0) {
+	  vec3 rainColor = vec3(Luminance(totalSky)) * vec3(0.65, 0.8, 1.0);
+    totalSky = mix(totalSky, rainColor, rainStrength);
+  }
 
 	return vec4(totalSky, starAlpha);
 }
