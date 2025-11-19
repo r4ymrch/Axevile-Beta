@@ -1,3 +1,4 @@
+#version 120
 /*
 ====================================================
 - Axevile shaders v1.0.0 developed and maintaned by r4ymrch.
@@ -6,6 +7,5 @@
 ====================================================
 */
 
-#version 120
 #define SOLID_BLOCKS
 #include "gbuffers_main.fsh"

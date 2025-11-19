@@ -47,6 +47,7 @@ void main()
     outColor = albedo;
   #endif
 
+  // apply gamma correction.
   outColor.rgb = pow(outColor.rgb, vec3(2.2));
 
   /* DRAWBUFFERS:0 */
